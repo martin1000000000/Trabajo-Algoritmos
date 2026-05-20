@@ -7,7 +7,7 @@ TARGET := main
 endif
 
 SOURCES := main.cpp
-HEADERS := data.hpp explicit_array.hpp gap_coding.hpp elias.hpp
+HEADERS := include/data.hpp include/explicit_array.hpp include/gap_coding.hpp include/elias.hpp
 
 .PHONY: all clean run-benchmark
 

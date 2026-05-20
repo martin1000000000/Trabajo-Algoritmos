@@ -1,7 +1,7 @@
-#include "data.hpp"
-#include "elias.hpp"
-#include "explicit_array.hpp"
-#include "gap_coding.hpp"
+#include "include/data.hpp"
+#include "include/elias.hpp"
+#include "include/explicit_array.hpp"
+#include "include/gap_coding.hpp"
 
 #include <chrono>
 #include <cmath>

@@ -99,8 +99,8 @@ El programa trabaja con `uint64_t` y lee los numeros con `std::stoull`, por lo q
 ## Archivos principales
 
 - `main.cpp`: entrada del programa, modos de ejecucion y mediciones.
-- `data.hpp`: generacion de datos lineales/normales y lectura CSV.
-- `explicit_array.hpp`: busqueda binaria sobre arreglo explicito.
-- `gap_coding.hpp`: Gap-Coding con sample.
-- `elias.hpp`: bitstream, Elias Gamma, Elias Delta y busqueda sobre gaps comprimidos.
+- `include/data.hpp`: generacion de datos lineales/normales y lectura CSV.
+- `include/explicit_array.hpp`: busqueda binaria sobre arreglo explicito.
+- `include/gap_coding.hpp`: Gap-Coding con sample.
+- `include/elias.hpp`: bitstream, Elias Gamma, Elias Delta y busqueda sobre gaps comprimidos.
 - `Makefile`: compilacion.
