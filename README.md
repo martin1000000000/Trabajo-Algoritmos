@@ -48,8 +48,8 @@ Argumentos opcionales:
 
 Salida:
 
-- `benchmark_results.csv` por defecto, o el archivo indicado con `--output`.
-- Columnas: `distribution,n,structure,build_ms,search_ms,bytes,bits,queries`.
+- `benchmark_resultados.csv` por defecto, o el archivo indicado con `--output`.
+- Columnas: `distribucion,n,estructura,construccion_ms,busqueda_ms,bytes,bits,busquedas`.
 
 El benchmark prueba distribucion lineal y normal para tamanos `10000`, `100000` y `1000000`.
 Puede cambiar esos tamanos con `--sizes`, separandolos por coma y sin espacios.
@@ -85,12 +85,47 @@ Valor> 12345
 
 Estructuras aceptadas:
 
-- `explicit`
+- `arreglo_original`
 - `gap`
 - `gamma`
 - `delta`
 
+Tambien se acepta `explicit` como alias de `arreglo_original`.
+
 Para terminar, escribir `salir` o `exit`.
+
+## Modo visualizar
+
+Sirve para entender y explicar el flujo de trabajo de los Casos 1, 2 y 3 sin tener que revisar el codigo fuente. Es un modo didactico: muestra paso a paso como se representa el mismo arreglo como arreglo explicito, Gap-Coding con sample, Elias Gamma sobre gaps y Elias Delta sobre gaps.
+
+Al iniciar, muestra automaticamente las cuatro representaciones en este orden:
+
+1. Arreglo explicito.
+2. Gap-Coding con sample.
+3. Elias Gamma sobre gaps.
+4. Elias Delta sobre gaps.
+
+Para cada estructura muestra la construccion, el arreglo/gaps correspondientes, el tiempo de construccion y el espacio utilizado. Puede trabajar con datos de ejemplo o con un archivo `.csv`.
+
+```bash
+./main --visualizar
+```
+
+Con archivo:
+
+```bash
+./main --visualizar -i entrada.csv
+```
+
+Luego el programa pide un valor a buscar:
+
+```text
+Valor a buscar (o salir)> 12
+```
+
+Con ese unico valor muestra la busqueda paso a paso en las cuatro estructuras. Para terminar, escribir `salir` o `exit`.
+
+Este modo es util para demostraciones, depuracion y grabacion del video. Para mediciones experimentales del informe se debe usar el modo benchmark, ya que `--visualizar` imprime muchos pasos por pantalla y esos `cout` afectan los tiempos.
 
 ## Rango de datos
 

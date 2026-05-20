@@ -20,4 +20,4 @@ run-benchmark: $(TARGET)
 	./$(TARGET) --benchmark
 
 clean:
-	rm -f main main.exe main_debug.exe benchmark_results.csv
+	rm -f main main.exe main_debug.exe benchmark_results.csv benchmark_resultados.csv
