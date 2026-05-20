@@ -5,7 +5,9 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <optional>
+#include <stdexcept>
 #include <vector>
 
 class GapCoding {
@@ -44,7 +46,7 @@ public:
     }
 
     size_t bytes_used() const {
-        return gaps_.capacity() * sizeof(uint64_t)
+        return gaps_.capacity() * sizeof(uint32_t)
             + sample_positions_.capacity() * sizeof(size_t)
             + sample_values_.capacity() * sizeof(uint64_t)
             + sample_bases_.capacity() * sizeof(uint64_t);
@@ -82,7 +84,10 @@ private:
         uint64_t previous = 0;
         for (size_t i = 0; i < values.size(); ++i) {
             uint64_t gap = i == 0 ? values[i] : values[i] - previous;
-            gaps_.push_back(gap);
+            if (gap > std::numeric_limits<uint32_t>::max()) {
+                throw std::overflow_error("Gap-Coding requiere gaps que quepan en uint32_t");
+            }
+            gaps_.push_back(static_cast<uint32_t>(gap));
 
             if (i % sample_step_ == 0) {
                 sample_positions_.push_back(i);
@@ -94,7 +99,7 @@ private:
         }
     }
 
-    std::vector<uint64_t> gaps_;
+    std::vector<uint32_t> gaps_;
     std::vector<size_t> sample_positions_;
     std::vector<uint64_t> sample_values_;
     std::vector<uint64_t> sample_bases_;

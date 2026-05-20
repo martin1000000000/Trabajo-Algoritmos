@@ -153,6 +153,7 @@ std::vector<uint64_t> build_queries(
 void write_metric(
     std::ofstream& output,
     const std::string& distribution,
+    const std::string& parameter,
     size_t n,
     const std::string& structure,
     double build_ms,
@@ -162,6 +163,7 @@ void write_metric(
     size_t queries
 ) {
     output << distribution << ','
+           << parameter << ','
            << n << ','
            << structure << ','
            << build_ms << ','
@@ -181,12 +183,30 @@ void run_benchmark(
         throw std::runtime_error("No se pudo crear el archivo de salida: " + output_path);
     }
 
-    output << "distribucion,n,estructura,construccion_ms,busqueda_ms,bytes,bits,busquedas\n";
+    output << "distribucion,parametro,n,estructura,construccion_ms,busqueda_ms,bytes,bits,busquedas\n";
 
     uint64_t seed = 1452026;
-    for (Distribution distribution : {Distribution::Linear, Distribution::Normal}) {
+    struct BenchmarkCase {
+        Distribution distribution;
+        std::string parameter;
+        uint32_t max_gap;
+        double stddev;
+    };
+
+    std::vector<BenchmarkCase> cases = {
+        {Distribution::Linear, "max_gap=10", 10, 0.0},
+        {Distribution::Linear, "max_gap=100", 100, 0.0},
+        {Distribution::Linear, "max_gap=1000", 1000, 0.0},
+        {Distribution::Normal, "stddev=10", 0, 10.0},
+        {Distribution::Normal, "stddev=30", 0, 30.0},
+        {Distribution::Normal, "stddev=100", 0, 100.0},
+    };
+
+    for (const BenchmarkCase& benchmark_case : cases) {
         for (size_t n : sizes) {
-            std::vector<uint64_t> data = generate_data(n, distribution, seed++, 30.0);
+            std::vector<uint64_t> data = benchmark_case.distribution == Distribution::Linear
+                ? generate_linear_data(n, benchmark_case.max_gap, seed++)
+                : generate_normal_data(n, 50.0, benchmark_case.stddev, seed++);
             std::vector<uint64_t> queries = build_queries(data, query_count, seed++);
             size_t sample_step = std::max<size_t>(1, static_cast<size_t>(std::sqrt(n)));
 
@@ -197,7 +217,8 @@ void run_benchmark(
                 double explicit_search = measure_searches(explicit_array, queries);
                 write_metric(
                     output,
-                    distribution_name(distribution),
+                    distribution_name(benchmark_case.distribution),
+                    benchmark_case.parameter,
                     n,
                     "arreglo_original",
                     explicit_build,
@@ -215,7 +236,8 @@ void run_benchmark(
                 double gap_search = measure_searches(gap_coding, queries);
                 write_metric(
                     output,
-                    distribution_name(distribution),
+                    distribution_name(benchmark_case.distribution),
+                    benchmark_case.parameter,
                     n,
                     "gap_coding",
                     gap_build,
@@ -233,7 +255,8 @@ void run_benchmark(
                 double search_ms = measure_searches(compressed, queries);
                 write_metric(
                     output,
-                    distribution_name(distribution),
+                    distribution_name(benchmark_case.distribution),
+                    benchmark_case.parameter,
                     n,
                     elias_codec_name(codec),
                     build_ms,
@@ -244,7 +267,8 @@ void run_benchmark(
                 );
             }
 
-            std::cout << "Benchmark listo: " << distribution_name(distribution)
+            std::cout << "Benchmark listo: " << distribution_name(benchmark_case.distribution)
+                      << " " << benchmark_case.parameter
                       << " n=" << n << '\n';
         }
     }

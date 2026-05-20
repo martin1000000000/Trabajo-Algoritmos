@@ -49,9 +49,9 @@ Argumentos opcionales:
 Salida:
 
 - `benchmark_resultados.csv` por defecto, o el archivo indicado con `--output`.
-- Columnas: `distribucion,n,estructura,construccion_ms,busqueda_ms,bytes,bits,busquedas`.
+- Columnas: `distribucion,parametro,n,estructura,construccion_ms,busqueda_ms,bytes,bits,busquedas`.
 
-El benchmark prueba distribucion lineal y normal para tamanos `10000`, `100000` y `1000000`.
+El benchmark prueba distribucion lineal con distintos `max_gap` y distribucion normal con distintas desviaciones estandar para tamanos `10000`, `100000` y `1000000`.
 Puede cambiar esos tamanos con `--sizes`, separandolos por coma y sin espacios.
 
 ## Modo demo
