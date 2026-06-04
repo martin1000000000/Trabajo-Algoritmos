@@ -5,9 +5,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <limits>
 #include <optional>
-#include <stdexcept>
 #include <vector>
 
 class CodificacionGap {
@@ -26,12 +24,20 @@ public:
             ? 0
             : static_cast<size_t>((it - valores_muestra_.begin()) - 1);
 
-        size_t inicio = posiciones_muestra_[indice_muestra];
+        // Si el punto de muestreo seleccionado ya es el objetivo, el primer duplicado
+        // puede estar en bloques anteriores: retrocedemos el inicio de búsqueda
+        // mientras el punto de muestreo sea igual al objetivo.
+        size_t indice_busqueda = indice_muestra;
+        while (indice_busqueda > 0 && valores_muestra_[indice_busqueda] == objetivo) {
+            indice_busqueda--;
+        }
+
+        size_t inicio = posiciones_muestra_[indice_busqueda];
         size_t fin = indice_muestra + 1 < posiciones_muestra_.size()
             ? posiciones_muestra_[indice_muestra + 1]
             : gaps_.size();
 
-        uint64_t actual = bases_muestra_[indice_muestra];
+        uint64_t actual = bases_muestra_[indice_busqueda];
         for (size_t i = inicio; i < fin; ++i) {
             actual += gaps_[i];
             if (actual == objetivo) {
@@ -46,10 +52,10 @@ public:
     }
 
     size_t bytes_usados() const {
-        return gaps_.capacity() * sizeof(uint32_t)
-            + posiciones_muestra_.capacity() * sizeof(size_t)
-            + valores_muestra_.capacity() * sizeof(uint64_t)
-            + bases_muestra_.capacity() * sizeof(uint64_t);
+        return gaps_.size() * sizeof(uint64_t)
+            + posiciones_muestra_.size() * sizeof(size_t)
+            + valores_muestra_.size() * sizeof(uint64_t)
+            + bases_muestra_.size() * sizeof(uint64_t);
     }
 
     size_t tamano() const {
@@ -84,10 +90,7 @@ private:
         uint64_t anterior = 0;
         for (size_t i = 0; i < valores.size(); ++i) {
             uint64_t gap = i == 0 ? valores[i] : valores[i] - anterior;
-            if (gap > std::numeric_limits<uint32_t>::max()) {
-                throw std::overflow_error("Gap-Coding requiere gaps que quepan en uint32_t");
-            }
-            gaps_.push_back(static_cast<uint32_t>(gap));
+            gaps_.push_back(gap);
 
             if (i % paso_muestra_ == 0) {
                 posiciones_muestra_.push_back(i);
@@ -99,7 +102,7 @@ private:
         }
     }
 
-    std::vector<uint32_t> gaps_;
+    std::vector<uint64_t> gaps_;
     std::vector<size_t> posiciones_muestra_;
     std::vector<uint64_t> valores_muestra_;
     std::vector<uint64_t> bases_muestra_;

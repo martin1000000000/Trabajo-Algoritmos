@@ -36,15 +36,18 @@ Para la lectura y conversión de caracteres numéricos desde los archivos CSV a 
 
 Gracias a esta arquitectura, el rango de los números aceptados y procesados por el programa va desde **`0`** hasta **`18,446,744,073,709,551,615`** ($2^{64}-1$). No se aceptan números negativos.
 
+> **Nota:** Las estructuras Elias (Gamma y Delta) codifican internamente `gap + 1` para soportar duplicados. Por ello, no pueden representar un gap igual a $2^{64}-1$ (`UINT64_MAX`), ya que la suma desbordaría a cero y la construcción lanzará un error. Esto afecta únicamente a las estructuras Elias (`arreglo_original` y `gap_coding` sí manejan este valor). En la práctica, este error solo ocurre si el arreglo contiene el valor `18,446,744,073,709,551,615` como primer elemento, o si la diferencia entre dos elementos consecutivos es exactamente ese valor; en los benchmarks de este proyecto no afecta ya que los gaps generados son pequeños.
+
 ## Modos de Uso
 
 El programa cuenta con dos modos de ejecución principales para facilitar tanto la evaluación de rendimiento como la validación pedagógica:
 
 ### 1. Modo Benchmark (Generación de métricas)
-Evalúa las estructuras generando automáticamente arreglos con tamaños desde 10.000 hasta 100.000.000 de elementos en distribuciones Lineales y Normales. Exporta los resultados de tiempo y espacio.
+Evalúa las estructuras generando automáticamente arreglos con tamaños desde **10.000 hasta 100.000.000** de elementos en distribuciones Lineales y Normales. Exporta los resultados de tiempo y espacio.
 ```bash
 ./main --benchmark
-# Opcionalmente se pueden pasar parámetros personalizados:
+# Por defecto usa: --sizes 10000,100000,1000000,10000000,100000000 --queries 1000
+# Se pueden personalizar los parámetros:
 # ./main --benchmark --output resultados.csv --queries 10000 --sizes 10000,100000,1000000
 ```
 

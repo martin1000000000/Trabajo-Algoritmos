@@ -26,7 +26,7 @@ public:
     }
 
     size_t bytes_usados() const {
-        return valores_.capacity() * sizeof(uint64_t);
+        return valores_.size() * sizeof(uint64_t);
     }
 
 private:

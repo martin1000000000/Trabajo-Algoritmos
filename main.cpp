@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-using Reloj = std::chrono::high_resolution_clock;
+using Reloj = std::chrono::steady_clock;
 
 struct ResultadoTiempo {
     double milisegundos;
@@ -283,7 +283,7 @@ bool tiene_argumento(int argc, char** argv, const std::string& clave) {
 
 void imprimir_uso() {
     std::cout << "Uso:\n"
-              << "  ./main --benchmark [--output metricas.csv] [--queries 1000] [--sizes 10000,100000,1000000]\n"
+              << "  ./main --benchmark [--output metricas.csv] [--queries 1000] [--sizes 10000,100000,1000000,10000000,100000000]\n"
               << "  ./main -i archivo.csv\n";
 }
 
@@ -299,7 +299,7 @@ int main(int argc, char** argv) {
         if (tiene_argumento(argc, argv, "--benchmark")) {
             std::string salida = valor_argumento(argc, argv, "--output", "benchmark_resultados.csv");
             size_t consultas = static_cast<size_t>(std::stoull(valor_argumento(argc, argv, "--queries", "1000")));
-            std::vector<size_t> tamanos = parsear_tamanos(valor_argumento(argc, argv, "--sizes", "10000,100000,1000000"));
+            std::vector<size_t> tamanos = parsear_tamanos(valor_argumento(argc, argv, "--sizes", "10000,100000,1000000,10000000,100000000"));
             ejecutar_benchmark(salida, tamanos, consultas);
             return 0;
         }

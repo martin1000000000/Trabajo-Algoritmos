@@ -151,13 +151,21 @@ public:
             ? 0
             : static_cast<size_t>((it - valores_muestra_.begin()) - 1);
 
-        size_t inicio = posiciones_muestra_[indice_muestra];
+        // Si el punto de muestreo seleccionado ya es el objetivo, el primer duplicado
+        // puede estar en bloques anteriores: retrocedemos el inicio de búsqueda
+        // mientras el punto de muestreo sea igual al objetivo.
+        size_t indice_busqueda = indice_muestra;
+        while (indice_busqueda > 0 && valores_muestra_[indice_busqueda] == objetivo) {
+            indice_busqueda--;
+        }
+
+        size_t inicio = posiciones_muestra_[indice_busqueda];
         size_t fin = indice_muestra + 1 < posiciones_muestra_.size()
             ? posiciones_muestra_[indice_muestra + 1]
             : tamano_;
 
-        LectorBits lector(bytes_, cantidad_bits_, desplazamientos_bits_muestra_[indice_muestra]);
-        uint64_t actual = bases_muestra_[indice_muestra];
+        LectorBits lector(bytes_, cantidad_bits_, desplazamientos_bits_muestra_[indice_busqueda]);
+        uint64_t actual = bases_muestra_[indice_busqueda];
 
         for (size_t i = inicio; i < fin; ++i) {
             uint64_t gap_codificado = leer_codigo(lector);
@@ -176,11 +184,11 @@ public:
     }
 
     size_t bytes_usados() const {
-        return bytes_.capacity() * sizeof(uint8_t)
-            + posiciones_muestra_.capacity() * sizeof(size_t)
-            + valores_muestra_.capacity() * sizeof(uint64_t)
-            + bases_muestra_.capacity() * sizeof(uint64_t)
-            + desplazamientos_bits_muestra_.capacity() * sizeof(size_t);
+        return bytes_.size() * sizeof(uint8_t)
+            + posiciones_muestra_.size() * sizeof(size_t)
+            + valores_muestra_.size() * sizeof(uint64_t)
+            + bases_muestra_.size() * sizeof(uint64_t)
+            + desplazamientos_bits_muestra_.size() * sizeof(size_t);
     }
 
     size_t cantidad_bits() const {
@@ -224,6 +232,14 @@ private:
             }
 
             uint64_t gap = i == 0 ? valores[i] : valores[i] - anterior;
+            if (gap + 1 == 0) {
+                // gap == UINT64_MAX: gap+1 desbordaria a 0, que Elias no puede codificar.
+                // Esto ocurre si el arreglo comienza con 2^64-1, o si dos elementos difieren exactamente en 2^64-1.
+                throw std::overflow_error(
+                    "Elias: un gap es 2^64-1 (UINT64_MAX). "
+                    "gap+1 desbordaria a cero. Maximo gap soportado es 2^64-2."
+                );
+            }
             escribir_codigo(escritor, gap + 1);
             anterior = valores[i];
         }
