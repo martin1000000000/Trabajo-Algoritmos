@@ -10,27 +10,27 @@
 #include <string>
 #include <vector>
 
-class BitWriter {
+class EscritorBits {
 public:
-    void write_bit(bool bit) {
-        if (bit_count_ % 8 == 0) {
+    void escribir_bit(bool bit) {
+        if (cantidad_bits_ % 8 == 0) {
             bytes_.push_back(0);
         }
 
         if (bit) {
-            bytes_.back() |= static_cast<uint8_t>(1u << (7 - (bit_count_ % 8)));
+            bytes_.back() |= static_cast<uint8_t>(1u << (7 - (cantidad_bits_ % 8)));
         }
-        ++bit_count_;
+        ++cantidad_bits_;
     }
 
-    void write_bits(uint64_t value, int count) {
-        for (int i = count - 1; i >= 0; --i) {
-            write_bit(((value >> i) & 1ULL) != 0);
+    void escribir_bits(uint64_t valor, int cantidad) {
+        for (int i = cantidad - 1; i >= 0; --i) {
+            escribir_bit(((valor >> i) & 1ULL) != 0);
         }
     }
 
-    size_t bit_count() const {
-        return bit_count_;
+    size_t cantidad_bits() const {
+        return cantidad_bits_;
     }
 
     const std::vector<uint8_t>& bytes() const {
@@ -39,135 +39,135 @@ public:
 
 private:
     std::vector<uint8_t> bytes_;
-    size_t bit_count_ = 0;
+    size_t cantidad_bits_ = 0;
 };
 
-class BitReader {
+class LectorBits {
 public:
-    BitReader(const std::vector<uint8_t>& bytes, size_t bit_count, size_t offset = 0)
-        : bytes_(bytes), bit_count_(bit_count), offset_(offset) {}
+    LectorBits(const std::vector<uint8_t>& bytes, size_t cantidad_bits, size_t desplazamiento = 0)
+        : bytes_(bytes), cantidad_bits_(cantidad_bits), desplazamiento_(desplazamiento) {}
 
-    bool read_bit() {
-        if (offset_ >= bit_count_) {
+    bool leer_bit() {
+        if (desplazamiento_ >= cantidad_bits_) {
             throw std::out_of_range("Lectura fuera del bitstream");
         }
 
-        bool bit = ((bytes_[offset_ / 8] >> (7 - (offset_ % 8))) & 1U) != 0;
-        ++offset_;
+        bool bit = ((bytes_[desplazamiento_ / 8] >> (7 - (desplazamiento_ % 8))) & 1U) != 0;
+        ++desplazamiento_;
         return bit;
     }
 
-    uint64_t read_bits(int count) {
-        uint64_t value = 0;
-        for (int i = 0; i < count; ++i) {
-            value = (value << 1) | (read_bit() ? 1ULL : 0ULL);
+    uint64_t leer_bits(int cantidad) {
+        uint64_t valor = 0;
+        for (int i = 0; i < cantidad; ++i) {
+            valor = (valor << 1) | (leer_bit() ? 1ULL : 0ULL);
         }
-        return value;
+        return valor;
     }
 
-    size_t offset() const {
-        return offset_;
+    size_t desplazamiento() const {
+        return desplazamiento_;
     }
 
 private:
     const std::vector<uint8_t>& bytes_;
-    size_t bit_count_;
-    size_t offset_;
+    size_t cantidad_bits_;
+    size_t desplazamiento_;
 };
 
-inline int bit_length(uint64_t value) {
-    int length = 0;
+inline int longitud_bits(uint64_t valor) {
+    int longitud = 0;
     do {
-        ++length;
-        value >>= 1;
-    } while (value != 0);
-    return length;
+        ++longitud;
+        valor >>= 1;
+    } while (valor != 0);
+    return longitud;
 }
 
-inline void write_gamma(BitWriter& writer, uint64_t value) {
-    if (value == 0) {
+inline void escribir_gamma(EscritorBits& escritor, uint64_t valor) {
+    if (valor == 0) {
         throw std::invalid_argument("Elias gamma solo codifica enteros positivos");
     }
 
-    int length = bit_length(value);
-    for (int i = 0; i < length - 1; ++i) {
-        writer.write_bit(false);
+    int longitud = longitud_bits(valor);
+    for (int i = 0; i < longitud - 1; ++i) {
+        escritor.escribir_bit(false);
     }
-    writer.write_bits(value, length);
+    escritor.escribir_bits(valor, longitud);
 }
 
-inline uint64_t read_gamma(BitReader& reader) {
-    int zeros = 0;
-    while (!reader.read_bit()) {
-        ++zeros;
+inline uint64_t leer_gamma(LectorBits& lector) {
+    int ceros = 0;
+    while (!lector.leer_bit()) {
+        ++ceros;
     }
 
-    uint64_t suffix = zeros == 0 ? 0 : reader.read_bits(zeros);
-    return (1ULL << zeros) | suffix;
+    uint64_t sufijo = ceros == 0 ? 0 : lector.leer_bits(ceros);
+    return (1ULL << ceros) | sufijo;
 }
 
-inline void write_delta(BitWriter& writer, uint64_t value) {
-    if (value == 0) {
+inline void escribir_delta(EscritorBits& escritor, uint64_t valor) {
+    if (valor == 0) {
         throw std::invalid_argument("Elias delta solo codifica enteros positivos");
     }
 
-    int length = bit_length(value);
-    write_gamma(writer, static_cast<uint64_t>(length));
-    writer.write_bits(value ^ (1ULL << (length - 1)), length - 1);
+    int longitud = longitud_bits(valor);
+    escribir_gamma(escritor, static_cast<uint64_t>(longitud));
+    escritor.escribir_bits(valor ^ (1ULL << (longitud - 1)), longitud - 1);
 }
 
-inline uint64_t read_delta(BitReader& reader) {
-    uint64_t length = read_gamma(reader);
-    uint64_t suffix = length <= 1 ? 0 : reader.read_bits(static_cast<int>(length - 1));
-    return (1ULL << (length - 1)) | suffix;
+inline uint64_t leer_delta(LectorBits& lector) {
+    uint64_t longitud = leer_gamma(lector);
+    uint64_t sufijo = longitud <= 1 ? 0 : lector.leer_bits(static_cast<int>(longitud - 1));
+    return (1ULL << (longitud - 1)) | sufijo;
 }
 
-enum class EliasCodec {
+enum class CodecElias {
     Gamma,
     Delta
 };
 
-inline std::string elias_codec_name(EliasCodec codec) {
-    return codec == EliasCodec::Gamma ? "elias_gamma" : "elias_delta";
+inline std::string nombre_codec_elias(CodecElias codec) {
+    return codec == CodecElias::Gamma ? "elias_gamma" : "elias_delta";
 }
 
-class EliasCompressedGaps {
+class GapsComprimidosElias {
 public:
-    EliasCompressedGaps(
-        const std::vector<uint64_t>& values,
-        EliasCodec codec,
-        size_t sample_step = 0
+    GapsComprimidosElias(
+        const std::vector<uint64_t>& valores,
+        CodecElias codec,
+        size_t paso_muestra = 0
     ) : codec_(codec) {
-        build(values, sample_step);
+        construir(valores, paso_muestra);
     }
 
-    std::optional<size_t> search(uint64_t target) const {
-        if (size_ == 0) {
+    std::optional<size_t> buscar(uint64_t objetivo) const {
+        if (tamano_ == 0) {
             return std::nullopt;
         }
 
-        auto it = std::upper_bound(sample_values_.begin(), sample_values_.end(), target);
-        size_t sample_index = it == sample_values_.begin()
+        auto it = std::upper_bound(valores_muestra_.begin(), valores_muestra_.end(), objetivo);
+        size_t indice_muestra = it == valores_muestra_.begin()
             ? 0
-            : static_cast<size_t>((it - sample_values_.begin()) - 1);
+            : static_cast<size_t>((it - valores_muestra_.begin()) - 1);
 
-        size_t start = sample_positions_[sample_index];
-        size_t end = sample_index + 1 < sample_positions_.size()
-            ? sample_positions_[sample_index + 1]
-            : size_;
+        size_t inicio = posiciones_muestra_[indice_muestra];
+        size_t fin = indice_muestra + 1 < posiciones_muestra_.size()
+            ? posiciones_muestra_[indice_muestra + 1]
+            : tamano_;
 
-        BitReader reader(bytes_, bit_count_, sample_bit_offsets_[sample_index]);
-        uint64_t current = sample_bases_[sample_index];
+        LectorBits lector(bytes_, cantidad_bits_, desplazamientos_bits_muestra_[indice_muestra]);
+        uint64_t actual = bases_muestra_[indice_muestra];
 
-        for (size_t i = start; i < end; ++i) {
-            uint64_t encoded_gap = read_code(reader);
-            uint64_t gap = encoded_gap - 1;
-            current += gap;
+        for (size_t i = inicio; i < fin; ++i) {
+            uint64_t gap_codificado = leer_codigo(lector);
+            uint64_t gap = gap_codificado - 1;
+            actual += gap;
 
-            if (current == target) {
+            if (actual == objetivo) {
                 return i;
             }
-            if (current > target) {
+            if (actual > objetivo) {
                 return std::nullopt;
             }
         }
@@ -175,84 +175,84 @@ public:
         return std::nullopt;
     }
 
-    size_t bytes_used() const {
+    size_t bytes_usados() const {
         return bytes_.capacity() * sizeof(uint8_t)
-            + sample_positions_.capacity() * sizeof(size_t)
-            + sample_values_.capacity() * sizeof(uint64_t)
-            + sample_bases_.capacity() * sizeof(uint64_t)
-            + sample_bit_offsets_.capacity() * sizeof(size_t);
+            + posiciones_muestra_.capacity() * sizeof(size_t)
+            + valores_muestra_.capacity() * sizeof(uint64_t)
+            + bases_muestra_.capacity() * sizeof(uint64_t)
+            + desplazamientos_bits_muestra_.capacity() * sizeof(size_t);
     }
 
-    size_t bit_count() const {
-        return bit_count_;
+    size_t cantidad_bits() const {
+        return cantidad_bits_;
     }
 
-    size_t size() const {
-        return size_;
+    size_t tamano() const {
+        return tamano_;
     }
 
-    size_t sample_step() const {
-        return sample_step_;
+    size_t paso_muestra() const {
+        return paso_muestra_;
     }
 
 private:
-    void build(const std::vector<uint64_t>& values, size_t sample_step) {
-        size_ = values.size();
-        if (values.empty()) {
-            sample_step_ = 1;
+    void construir(const std::vector<uint64_t>& valores, size_t paso_muestra) {
+        tamano_ = valores.size();
+        if (valores.empty()) {
+            paso_muestra_ = 1;
             return;
         }
 
-        sample_step_ = sample_step == 0
-            ? std::max<size_t>(1, static_cast<size_t>(std::sqrt(values.size())))
-            : sample_step;
+        paso_muestra_ = paso_muestra == 0
+            ? std::max<size_t>(1, static_cast<size_t>(std::sqrt(valores.size())))
+            : paso_muestra;
 
-        sample_positions_.reserve((values.size() + sample_step_ - 1) / sample_step_);
-        sample_values_.reserve(sample_positions_.capacity());
-        sample_bases_.reserve(sample_positions_.capacity());
-        sample_bit_offsets_.reserve(sample_positions_.capacity());
+        posiciones_muestra_.reserve((valores.size() + paso_muestra_ - 1) / paso_muestra_);
+        valores_muestra_.reserve(posiciones_muestra_.capacity());
+        bases_muestra_.reserve(posiciones_muestra_.capacity());
+        desplazamientos_bits_muestra_.reserve(posiciones_muestra_.capacity());
 
-        BitWriter writer;
-        uint64_t previous = 0;
+        EscritorBits escritor;
+        uint64_t anterior = 0;
 
-        for (size_t i = 0; i < values.size(); ++i) {
-            if (i % sample_step_ == 0) {
-                sample_positions_.push_back(i);
-                sample_values_.push_back(values[i]);
-                sample_bases_.push_back(i == 0 ? 0 : previous);
-                sample_bit_offsets_.push_back(writer.bit_count());
+        for (size_t i = 0; i < valores.size(); ++i) {
+            if (i % paso_muestra_ == 0) {
+                posiciones_muestra_.push_back(i);
+                valores_muestra_.push_back(valores[i]);
+                bases_muestra_.push_back(i == 0 ? 0 : anterior);
+                desplazamientos_bits_muestra_.push_back(escritor.cantidad_bits());
             }
 
-            uint64_t gap = i == 0 ? values[i] : values[i] - previous;
-            write_code(writer, gap + 1);
-            previous = values[i];
+            uint64_t gap = i == 0 ? valores[i] : valores[i] - anterior;
+            escribir_codigo(escritor, gap + 1);
+            anterior = valores[i];
         }
 
-        bytes_ = writer.bytes();
-        bit_count_ = writer.bit_count();
+        bytes_ = escritor.bytes();
+        cantidad_bits_ = escritor.cantidad_bits();
     }
 
-    void write_code(BitWriter& writer, uint64_t value) const {
-        if (codec_ == EliasCodec::Gamma) {
-            write_gamma(writer, value);
+    void escribir_codigo(EscritorBits& escritor, uint64_t valor) const {
+        if (codec_ == CodecElias::Gamma) {
+            escribir_gamma(escritor, valor);
         } else {
-            write_delta(writer, value);
+            escribir_delta(escritor, valor);
         }
     }
 
-    uint64_t read_code(BitReader& reader) const {
-        return codec_ == EliasCodec::Gamma ? read_gamma(reader) : read_delta(reader);
+    uint64_t leer_codigo(LectorBits& lector) const {
+        return codec_ == CodecElias::Gamma ? leer_gamma(lector) : leer_delta(lector);
     }
 
-    EliasCodec codec_;
+    CodecElias codec_;
     std::vector<uint8_t> bytes_;
-    std::vector<size_t> sample_positions_;
-    std::vector<uint64_t> sample_values_;
-    std::vector<uint64_t> sample_bases_;
-    std::vector<size_t> sample_bit_offsets_;
-    size_t bit_count_ = 0;
-    size_t size_ = 0;
-    size_t sample_step_ = 1;
+    std::vector<size_t> posiciones_muestra_;
+    std::vector<uint64_t> valores_muestra_;
+    std::vector<uint64_t> bases_muestra_;
+    std::vector<size_t> desplazamientos_bits_muestra_;
+    size_t cantidad_bits_ = 0;
+    size_t tamano_ = 0;
+    size_t paso_muestra_ = 1;
 };
 
 #endif
