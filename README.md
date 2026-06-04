@@ -1,141 +1,63 @@
-# Grupo 3 del trabajo de diseno y analisis de algoritmos
+# Estructuras de Datos Comprimidas - Trabajo Algoritmos
 
-## Integrantes
+Este repositorio contiene la implementación en C++17 de un sistema de búsqueda sobre secuencias de números enteros crecientes utilizando distintas estrategias de compresión. Se comparan el uso de arreglos explícitos contra enfoques compactos utilizando **Gap Coding** y **Codificación de Elias (Gamma y Delta)**.
 
-- Diego Mora
-- Martin Arrigo
-- Rodrigo Almonacid
+## Estructura del Proyecto
 
-## Proyecto
+```text
+├── include/
+│   ├── data.hpp           # Generación de distribuciones (Normal y Lineal) y lectura de CSV
+│   ├── explicit_array.hpp # Implementación baseline (arreglo original no comprimido)
+│   ├── gap_coding.hpp     # Implementación de compresión Gap-Coding con muestreo (sqrt(n))
+│   └── elias.hpp          # Codificador/Decodificador bit a bit para Elias Gamma y Delta
+├── main.cpp               # Punto de entrada, modos de ejecución y benchmarks
+├── Makefile               # Script de compilación para Linux/WSL
+└── README.md              # Este archivo
+```
 
-Implementacion para el proyecto semestral de INFO145. El programa compara tres formas de representar y buscar en arreglos ordenados:
+## Requisitos y Compilación
 
-- Caso 1: arreglo explicito ordenado.
-- Caso 2: Gap-Coding con indice de muestreo (`sample`).
-- Caso 3: compresion de gaps con codificacion Elias Gamma y Elias Delta.
+El proyecto está diseñado para ser compilado en un entorno **Linux (o WSL en Windows)**. Requiere un compilador compatible con **C++17** (ej. `g++`).
 
-Como Elias Gamma y Delta solo codifican enteros positivos, cada gap se almacena como `gap + 1` y al decodificar se resta `1`. Esto permite representar gaps iguales a cero.
-
-## Compilacion
-
-Con Makefile:
-
+Para compilar el proyecto, simplemente ejecuta en la raíz del proyecto:
 ```bash
 make
 ```
+Esto generará el ejecutable `main` (o `main.exe` en Windows). Para limpiar los binarios, puedes usar `make clean`.
 
-Compilacion manual equivalente:
+## Modos de Uso
 
-```bash
-g++ -std=c++17 -O3 -Wall -Wextra -pedantic main.cpp -o main
-```
+El programa cuenta con cuatro modos de ejecución principales para facilitar tanto la evaluación de rendimiento como la validación pedagógica:
 
-En Windows, si el ejecutable queda como `main.exe`, los ejemplos se ejecutan usando `./main.exe`.
-
-## Modo benchmark
-
-Ejecuta generacion de datos, construccion de estructuras, busquedas y medicion de espacio.
-
-```bash
-./main --benchmark
-```
-
-Argumentos opcionales:
-
-```bash
-./main --benchmark --output metricas.csv --queries 5000 --sizes 10000,100000
-```
-
-Salida:
-
-- `benchmark_resultados.csv` por defecto, o el archivo indicado con `--output`.
-- Columnas: `distribucion,n,estructura,construccion_ms,busqueda_ms,bytes,bits,busquedas`.
-
-El benchmark prueba distribucion lineal y distribucion normal para tamanos `10000`, `100000` y `1000000`.
-Puede cambiar esos tamanos con `--sizes`, separandolos por coma y sin espacios.
-
-## Modo demo
-
-Muestra un ejemplo pequeno con el arreglo, sus gaps y la codificacion Elias Gamma/Delta de cada gap.
-
+### 1. Modo Demo (Ejecución rápida)
+Realiza una demostración hardcodeada con un arreglo pequeño, mostrando los gaps y cómo se codifican en bits usando Gamma y Delta.
 ```bash
 ./main --demo
 ```
 
-En Windows/MSYS:
-
+### 2. Modo Benchmark (Generación de métricas)
+Evalúa las estructuras generando automáticamente arreglos con tamaños desde 10.000 hasta 100.000.000 de elementos en distribuciones Lineales y Normales. Exporta los resultados de tiempo y espacio.
 ```bash
-./main.exe --demo
+./main --benchmark
+# Opcionalmente se pueden pasar parámetros personalizados:
+# ./main --benchmark --output resultados.csv --queries 10000 --sizes 10000,100000,1000000
 ```
 
-## Modo archivo
-
-Lee un archivo `.csv` con numeros enteros no negativos, los ordena, construye las estructuras y permite buscar interactivamente.
-
+### 3. Modo Archivo Interactivo (Testing manual)
+Permite cargar un archivo `.csv` con números (separados por cualquier caracter no numérico) y levanta una consola interactiva para realizar búsquedas manuales sobre cualquiera de las 4 estructuras y comparar los tiempos.
 ```bash
-./main -i ruta/del/archivo.csv
+./main -i archivo_de_datos.csv
 ```
+*Tip: Una vez en la consola, introduce la estructura (`arreglo_original`, `gap`, `gamma` o `delta`) y luego el valor a buscar.*
 
-Luego ingresar una estructura y un valor:
-
-```text
-Estructura> gamma
-Valor> 12345
-```
-
-Estructuras aceptadas:
-
-- `arreglo_original`
-- `gap`
-- `gamma`
-- `delta`
-
-Tambien se acepta `explicit` como alias de `arreglo_original`.
-
-Para terminar, escribir `salir` o `exit`.
-
-## Modo visualizar
-
-Sirve para entender y explicar el flujo de trabajo de los Casos 1, 2 y 3 sin tener que revisar el codigo fuente. Es un modo didactico: muestra paso a paso como se representa el mismo arreglo como arreglo explicito, Gap-Coding con sample, Elias Gamma sobre gaps y Elias Delta sobre gaps.
-
-Al iniciar, muestra automaticamente las cuatro representaciones en este orden:
-
-1. Arreglo explicito.
-2. Gap-Coding con sample.
-3. Elias Gamma sobre gaps.
-4. Elias Delta sobre gaps.
-
-Para cada estructura muestra la construccion, el arreglo/gaps correspondientes, el tiempo de construccion y el espacio utilizado. Puede trabajar con datos de ejemplo o con un archivo `.csv`.
-
+### 4. Modo Visual (Paso a paso)
+Herramienta visual que muestra detalladamente cómo el programa transforma los datos bases a gaps, cómo los comprime a nivel de bits y los pasos exactos que hace la búsqueda binaria y el escaneo por bloques de las muestras.
 ```bash
 ./main --visualizar
+# También puede combinarse con un archivo CSV propio:
+# ./main --visualizar -i archivo_de_datos.csv
 ```
 
-Con archivo:
-
-```bash
-./main --visualizar -i entrada.csv
-```
-
-Luego el programa pide un valor a buscar:
-
-```text
-Valor a buscar (o salir)> 12
-```
-
-Con ese unico valor muestra la busqueda paso a paso en las cuatro estructuras. Para terminar, escribir `salir` o `exit`.
-
-Este modo es util para demostraciones, depuracion y grabacion del video. Para mediciones experimentales del informe se debe usar el modo benchmark, ya que `--visualizar` imprime muchos pasos por pantalla y esos `cout` afectan los tiempos.
-
-## Rango de datos
-
-El programa trabaja con `uint64_t` y lee los numeros con `std::stoull`, por lo que acepta enteros no negativos en el rango `0` a `18446744073709551615`, siempre que las sumas internas no desborden ese tipo.
-
-## Archivos principales
-
-- `main.cpp`: entrada del programa, modos de ejecucion y mediciones.
-- `include/data.hpp`: generacion de datos lineales/normales y lectura CSV.
-- `include/explicit_array.hpp`: busqueda binaria sobre arreglo explicito.
-- `include/gap_coding.hpp`: Gap-Coding con sample.
-- `include/elias.hpp`: bitstream, Elias Gamma, Elias Delta y busqueda sobre gaps comprimidos.
-- `Makefile`: compilacion.
+## Detalles de Implementación
+*   **Muestreo (Sampling):** Las estructuras comprimidas (`gap`, `gamma` y `delta`) utilizan un índice de muestreo separado cada $\lfloor\sqrt{n}\rfloor$ posiciones para mantener los tiempos de búsqueda eficientes sin comprometer demasiado el ratio de compresión.
+*   **Manejo del Cero en Elias:** Dado que los códigos de Elias estandarizados no pueden representar el número 0 de forma natural, internamente se codifica el valor `gap + 1` en las estructuras Gamma y Delta para permitir la existencia de valores repetidos (gap = 0).
