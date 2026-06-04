@@ -8,34 +8,42 @@
 #include <optional>
 #include <vector>
 
-class GapCoding {
+class CodificacionGap {
 public:
-    GapCoding(const std::vector<uint64_t>& values, size_t sample_step = 0) {
-        build(values, sample_step);
+    CodificacionGap(const std::vector<uint64_t>& valores, size_t paso_muestra = 0) {
+        construir(valores, paso_muestra);
     }
 
-    std::optional<size_t> search(uint64_t target) const {
+    std::optional<size_t> buscar(uint64_t objetivo) const {
         if (gaps_.empty()) {
             return std::nullopt;
         }
 
-        auto it = std::upper_bound(sample_values_.begin(), sample_values_.end(), target);
-        size_t sample_index = it == sample_values_.begin()
+        auto it = std::upper_bound(valores_muestra_.begin(), valores_muestra_.end(), objetivo);
+        size_t indice_muestra = it == valores_muestra_.begin()
             ? 0
-            : static_cast<size_t>((it - sample_values_.begin()) - 1);
+            : static_cast<size_t>((it - valores_muestra_.begin()) - 1);
 
-        size_t start = sample_positions_[sample_index];
-        size_t end = sample_index + 1 < sample_positions_.size()
-            ? sample_positions_[sample_index + 1]
+        // Si el punto de muestreo seleccionado ya es el objetivo, el primer duplicado
+        // puede estar en bloques anteriores: retrocedemos el inicio de búsqueda
+        // mientras el punto de muestreo sea igual al objetivo.
+        size_t indice_busqueda = indice_muestra;
+        while (indice_busqueda > 0 && valores_muestra_[indice_busqueda] == objetivo) {
+            indice_busqueda--;
+        }
+
+        size_t inicio = posiciones_muestra_[indice_busqueda];
+        size_t fin = indice_muestra + 1 < posiciones_muestra_.size()
+            ? posiciones_muestra_[indice_muestra + 1]
             : gaps_.size();
 
-        uint64_t current = sample_bases_[sample_index];
-        for (size_t i = start; i < end; ++i) {
-            current += gaps_[i];
-            if (current == target) {
+        uint64_t actual = bases_muestra_[indice_busqueda];
+        for (size_t i = inicio; i < fin; ++i) {
+            actual += gaps_[i];
+            if (actual == objetivo) {
                 return i;
             }
-            if (current > target) {
+            if (actual > objetivo) {
                 return std::nullopt;
             }
         }
@@ -43,62 +51,62 @@ public:
         return std::nullopt;
     }
 
-    size_t bytes_used() const {
-        return gaps_.capacity() * sizeof(uint64_t)
-            + sample_positions_.capacity() * sizeof(size_t)
-            + sample_values_.capacity() * sizeof(uint64_t)
-            + sample_bases_.capacity() * sizeof(uint64_t);
+    size_t bytes_usados() const {
+        return gaps_.size() * sizeof(uint64_t)
+            + posiciones_muestra_.size() * sizeof(size_t)
+            + valores_muestra_.size() * sizeof(uint64_t)
+            + bases_muestra_.size() * sizeof(uint64_t);
     }
 
-    size_t size() const {
+    size_t tamano() const {
         return gaps_.size();
     }
 
-    size_t sample_step() const {
-        return sample_step_;
+    size_t paso_muestra() const {
+        return paso_muestra_;
     }
 
 private:
-    void build(const std::vector<uint64_t>& values, size_t sample_step) {
+    void construir(const std::vector<uint64_t>& valores, size_t paso_muestra) {
         gaps_.clear();
-        sample_positions_.clear();
-        sample_values_.clear();
-        sample_bases_.clear();
+        posiciones_muestra_.clear();
+        valores_muestra_.clear();
+        bases_muestra_.clear();
 
-        if (values.empty()) {
-            sample_step_ = 1;
+        if (valores.empty()) {
+            paso_muestra_ = 1;
             return;
         }
 
-        sample_step_ = sample_step == 0
-            ? std::max<size_t>(1, static_cast<size_t>(std::sqrt(values.size())))
-            : sample_step;
+        paso_muestra_ = paso_muestra == 0
+            ? std::max<size_t>(1, static_cast<size_t>(std::sqrt(valores.size())))
+            : paso_muestra;
 
-        gaps_.reserve(values.size());
-        sample_positions_.reserve((values.size() + sample_step_ - 1) / sample_step_);
-        sample_values_.reserve(sample_positions_.capacity());
-        sample_bases_.reserve(sample_positions_.capacity());
+        gaps_.reserve(valores.size());
+        posiciones_muestra_.reserve((valores.size() + paso_muestra_ - 1) / paso_muestra_);
+        valores_muestra_.reserve(posiciones_muestra_.capacity());
+        bases_muestra_.reserve(posiciones_muestra_.capacity());
 
-        uint64_t previous = 0;
-        for (size_t i = 0; i < values.size(); ++i) {
-            uint64_t gap = i == 0 ? values[i] : values[i] - previous;
+        uint64_t anterior = 0;
+        for (size_t i = 0; i < valores.size(); ++i) {
+            uint64_t gap = i == 0 ? valores[i] : valores[i] - anterior;
             gaps_.push_back(gap);
 
-            if (i % sample_step_ == 0) {
-                sample_positions_.push_back(i);
-                sample_values_.push_back(values[i]);
-                sample_bases_.push_back(i == 0 ? 0 : previous);
+            if (i % paso_muestra_ == 0) {
+                posiciones_muestra_.push_back(i);
+                valores_muestra_.push_back(valores[i]);
+                bases_muestra_.push_back(i == 0 ? 0 : anterior);
             }
 
-            previous = values[i];
+            anterior = valores[i];
         }
     }
 
     std::vector<uint64_t> gaps_;
-    std::vector<size_t> sample_positions_;
-    std::vector<uint64_t> sample_values_;
-    std::vector<uint64_t> sample_bases_;
-    size_t sample_step_ = 1;
+    std::vector<size_t> posiciones_muestra_;
+    std::vector<uint64_t> valores_muestra_;
+    std::vector<uint64_t> bases_muestra_;
+    size_t paso_muestra_ = 1;
 };
 
 #endif

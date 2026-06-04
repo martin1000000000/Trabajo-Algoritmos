@@ -8,29 +8,29 @@
 #include <utility>
 #include <vector>
 
-class ExplicitArray {
+class ArregloExplicito {
 public:
-    explicit ExplicitArray(std::vector<uint64_t> values)
-        : values_(std::move(values)) {}
+    explicit ArregloExplicito(std::vector<uint64_t> valores)
+        : valores_(std::move(valores)) {}
 
-    std::optional<size_t> search(uint64_t target) const {
-        auto it = std::lower_bound(values_.begin(), values_.end(), target);
-        if (it == values_.end() || *it != target) {
+    std::optional<size_t> buscar(uint64_t objetivo) const {
+        auto it = std::lower_bound(valores_.begin(), valores_.end(), objetivo);
+        if (it == valores_.end() || *it != objetivo) {
             return std::nullopt;
         }
-        return static_cast<size_t>(it - values_.begin());
+        return static_cast<size_t>(it - valores_.begin());
     }
 
-    size_t size() const {
-        return values_.size();
+    size_t tamano() const {
+        return valores_.size();
     }
 
-    size_t bytes_used() const {
-        return values_.capacity() * sizeof(uint64_t);
+    size_t bytes_usados() const {
+        return valores_.size() * sizeof(uint64_t);
     }
 
 private:
-    std::vector<uint64_t> values_;
+    std::vector<uint64_t> valores_;
 };
 
 #endif
