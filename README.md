@@ -43,12 +43,15 @@ Gracias a esta arquitectura, el rango de los números aceptados y procesados por
 El programa cuenta con dos modos de ejecución principales para facilitar tanto la evaluación de rendimiento como la validación pedagógica:
 
 ### 1. Modo Benchmark (Generación de métricas)
-Evalúa las estructuras generando automáticamente arreglos con tamaños desde **10.000 hasta 100.000.000** de elementos en distribuciones Lineales y Normales. Exporta los resultados de tiempo y espacio.
+Evalúa las estructuras sobre arreglos en distribuciones Lineal y Normal. Para la distribución Normal se prueban **tres desviaciones estándar** distintas (`std5`, `std30`, `std100`), reflejadas en la columna `distribucion` del CSV de salida. Exporta los resultados de tiempo y espacio.
+
+Por defecto ejecuta los **tres tamaños base** (10.000, 100.000, 1.000.000). Para tamaños mayores se puede usar `--sizes` de forma personalizada.
 ```bash
 ./main --benchmark
-# Por defecto usa: --sizes 10000,100000,1000000,10000000,100000000 --queries 1000
-# Se pueden personalizar los parámetros:
-# ./main --benchmark --output resultados.csv --queries 10000 --sizes 10000,100000,1000000
+# Por defecto usa: --sizes 10000,100000,1000000 --queries 1000
+
+# Para incluir tamaños grandes (puede tardar varios minutos):
+# ./main --benchmark --output resultados.csv --queries 10000 --sizes 10000,100000,1000000,10000000,100000000
 ```
 
 ### 2. Modo Archivo Interactivo (Testing manual)
@@ -61,3 +64,4 @@ Permite cargar un archivo `.csv` con números (separados por cualquier caracter 
 ## Detalles de Implementación
 *   **Muestreo (Sampling):** Las estructuras comprimidas (`gap`, `gamma` y `delta`) utilizan un índice de muestreo separado cada $\lfloor\sqrt{n}\rfloor$ posiciones para mantener los tiempos de búsqueda eficientes sin comprometer demasiado el ratio de compresión.
 *   **Manejo del Cero en Elias:** Dado que los códigos de Elias estandarizados no pueden representar el número 0 de forma natural, internamente se codifica el valor `gap + 1` en las estructuras Gamma y Delta para permitir la existencia de valores repetidos (gap = 0).
+*   **Desviaciones Estándar en Normal:** El benchmark evalúa la distribución Normal con tres valores de $\sigma$ (`std5`, `std30`, `std100`), representando gaps pequeños (valores agrupados), medios y amplios respectivamente. Esto permite observar el impacto del tamaño de los gaps en el ratio de compresión y los tiempos de acceso de Elias y Gap Coding.

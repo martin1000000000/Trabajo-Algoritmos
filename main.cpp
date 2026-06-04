@@ -115,11 +115,18 @@ void ejecutar_benchmark(
         Distribucion distribucion;
         uint32_t gap_maximo;
         double desviacion;
+        std::string etiqueta;
     };
 
+    // Distribucion normal evaluada con tres desviaciones estandar distintas:
+    //   std5  -> gaps muy pequenos, valores muy agrupados
+    //   std30 -> dispersion moderada (caso base)
+    //   std100-> gaps amplios, valores mas dispersos
     std::vector<CasoBenchmark> casos = {
-        {Distribucion::Lineal, 100, 0.0},
-        {Distribucion::Normal, 0, 30.0},
+        {Distribucion::Lineal, 100,   0.0, "linear"},
+        {Distribucion::Normal,   0,   5.0, "normal_std5"},
+        {Distribucion::Normal,   0,  30.0, "normal_std30"},
+        {Distribucion::Normal,   0, 100.0, "normal_std100"},
     };
 
     for (const CasoBenchmark& caso : casos) {
@@ -137,7 +144,7 @@ void ejecutar_benchmark(
                 double tiempo_busqueda = medir_busquedas(arreglo_explicito, consultas);
                 escribir_metrica(
                     salida,
-                    nombre_distribucion(caso.distribucion),
+                    caso.etiqueta,
                     n,
                     "arreglo_original",
                     tiempo_construccion,
@@ -155,7 +162,7 @@ void ejecutar_benchmark(
                 double tiempo_busqueda = medir_busquedas(codificacion_gap, consultas);
                 escribir_metrica(
                     salida,
-                    nombre_distribucion(caso.distribucion),
+                    caso.etiqueta,
                     n,
                     "gap_coding",
                     tiempo_construccion,
@@ -173,7 +180,7 @@ void ejecutar_benchmark(
                 double tiempo_busqueda = medir_busquedas(comprimido, consultas);
                 escribir_metrica(
                     salida,
-                    nombre_distribucion(caso.distribucion),
+                    caso.etiqueta,
                     n,
                     nombre_codec_elias(codec),
                     tiempo_construccion,
@@ -184,7 +191,7 @@ void ejecutar_benchmark(
                 );
             }
 
-            std::cout << "Benchmark listo: " << nombre_distribucion(caso.distribucion)
+            std::cout << "Benchmark listo: " << caso.etiqueta
                       << " n=" << n << '\n';
         }
     }
@@ -283,7 +290,7 @@ bool tiene_argumento(int argc, char** argv, const std::string& clave) {
 
 void imprimir_uso() {
     std::cout << "Uso:\n"
-              << "  ./main --benchmark [--output metricas.csv] [--queries 1000] [--sizes 10000,100000,1000000,10000000,100000000]\n"
+              << "  ./main --benchmark [--output metricas.csv] [--queries 1000] [--sizes 10000,100000,1000000]\n"
               << "  ./main -i archivo.csv\n";
 }
 
@@ -299,7 +306,7 @@ int main(int argc, char** argv) {
         if (tiene_argumento(argc, argv, "--benchmark")) {
             std::string salida = valor_argumento(argc, argv, "--output", "benchmark_resultados.csv");
             size_t consultas = static_cast<size_t>(std::stoull(valor_argumento(argc, argv, "--queries", "1000")));
-            std::vector<size_t> tamanos = parsear_tamanos(valor_argumento(argc, argv, "--sizes", "10000,100000,1000000,10000000,100000000"));
+            std::vector<size_t> tamanos = parsear_tamanos(valor_argumento(argc, argv, "--sizes", "10000,100000,1000000"));
             ejecutar_benchmark(salida, tamanos, consultas);
             return 0;
         }
