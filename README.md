@@ -1,4 +1,9 @@
-# Estructuras de Datos Comprimidas - Trabajo Algoritmos
+# Trabajo Diseño y Análisis de Algoritmos
+
+**Integrantes:**
+* Diego Mora
+* Martin Arrigo
+* Rodrigo Almonacid
 
 Este repositorio contiene la implementación en C++17 de un sistema de búsqueda sobre secuencias de números enteros crecientes utilizando distintas estrategias de compresión. Se comparan el uso de arreglos explícitos contra enfoques compactos utilizando **Gap Coding** y **Codificación de Elias (Gamma y Delta)**.
 
