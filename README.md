@@ -38,15 +38,9 @@ Gracias a esta arquitectura, el rango de los números aceptados y procesados por
 
 ## Modos de Uso
 
-El programa cuenta con cuatro modos de ejecución principales para facilitar tanto la evaluación de rendimiento como la validación pedagógica:
+El programa cuenta con dos modos de ejecución principales para facilitar tanto la evaluación de rendimiento como la validación pedagógica:
 
-### 1. Modo Demo (Ejecución rápida)
-Realiza una demostración hardcodeada con un arreglo pequeño, mostrando los gaps y cómo se codifican en bits usando Gamma y Delta.
-```bash
-./main --demo
-```
-
-### 2. Modo Benchmark (Generación de métricas)
+### 1. Modo Benchmark (Generación de métricas)
 Evalúa las estructuras generando automáticamente arreglos con tamaños desde 10.000 hasta 100.000.000 de elementos en distribuciones Lineales y Normales. Exporta los resultados de tiempo y espacio.
 ```bash
 ./main --benchmark
@@ -54,20 +48,12 @@ Evalúa las estructuras generando automáticamente arreglos con tamaños desde 1
 # ./main --benchmark --output resultados.csv --queries 10000 --sizes 10000,100000,1000000
 ```
 
-### 3. Modo Archivo Interactivo (Testing manual)
+### 2. Modo Archivo Interactivo (Testing manual)
 Permite cargar un archivo `.csv` con números (separados por cualquier caracter no numérico) y levanta una consola interactiva para realizar búsquedas manuales sobre cualquiera de las 4 estructuras y comparar los tiempos.
 ```bash
 ./main -i archivo_de_datos.csv
 ```
 *Tip: Una vez en la consola, introduce la estructura (`arreglo_original`, `gap`, `gamma` o `delta`) y luego el valor a buscar.*
-
-### 4. Modo Visual (Paso a paso)
-Herramienta visual que muestra detalladamente cómo el programa transforma los datos bases a gaps, cómo los comprime a nivel de bits y los pasos exactos que hace la búsqueda binaria y el escaneo por bloques de las muestras.
-```bash
-./main --visualizar
-# También puede combinarse con un archivo CSV propio:
-# ./main --visualizar -i archivo_de_datos.csv
-```
 
 ## Detalles de Implementación
 *   **Muestreo (Sampling):** Las estructuras comprimidas (`gap`, `gamma` y `delta`) utilizan un índice de muestreo separado cada $\lfloor\sqrt{n}\rfloor$ posiciones para mantener los tiempos de búsqueda eficientes sin comprometer demasiado el ratio de compresión.
