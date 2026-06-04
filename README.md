@@ -25,6 +25,12 @@ make
 ```
 Esto generará el ejecutable `main` (o `main.exe` en Windows). Para limpiar los binarios, puedes usar `make clean`.
 
+## Tipos de Datos y Rango Aceptado
+Cumpliendo con los requisitos de la evaluación, este programa ha sido implementado utilizando el tipo de dato **`uint64_t`** (enteros sin signo de 64 bits). 
+Para la lectura y conversión de caracteres numéricos desde los archivos CSV a la memoria, el código utiliza la función **`std::stoull`** de la librería estándar de C++17 (el equivalente moderno y robusto a `atoll`).
+
+Gracias a esta arquitectura, el rango de los números aceptados y procesados por el programa va desde **`0`** hasta **`18,446,744,073,709,551,615`** ($2^{64}-1$). No se aceptan números negativos.
+
 ## Modos de Uso
 
 El programa cuenta con cuatro modos de ejecución principales para facilitar tanto la evaluación de rendimiento como la validación pedagógica:
